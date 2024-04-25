@@ -1,13 +1,8 @@
+//go:generate go run script/generate.go
+
 package runewidth
 
-import (
-	"os"
-	"strings"
-
-	"github.com/rivo/uniseg"
-)
-
-//go:generate go run script/generate.go
+import "os"
 
 var (
 	// EastAsianWidth will be set true if the current locale is CJK
@@ -173,135 +168,6 @@ func (c *Condition) CreateLUT() {
 	c.combinedLut = lut
 }
 
-// StringWidth return width as you can see
-func (c *Condition) StringWidth(s string) (width int) {
-	g := uniseg.NewGraphemes(s)
-	for g.Next() {
-		var chWidth int
-		for _, r := range g.Runes() {
-			chWidth = c.RuneWidth(r)
-			if chWidth > 0 {
-				break // Our best guess at this point is to use the width of the first non-zero-width rune.
-			}
-		}
-		width += chWidth
-	}
-	return
-}
-
-// Truncate return string truncated with w cells
-func (c *Condition) Truncate(s string, w int, tail string) string {
-	if c.StringWidth(s) <= w {
-		return s
-	}
-	w -= c.StringWidth(tail)
-	var width int
-	pos := len(s)
-	g := uniseg.NewGraphemes(s)
-	for g.Next() {
-		var chWidth int
-		for _, r := range g.Runes() {
-			chWidth = c.RuneWidth(r)
-			if chWidth > 0 {
-				break // See StringWidth() for details.
-			}
-		}
-		if width+chWidth > w {
-			pos, _ = g.Positions()
-			break
-		}
-		width += chWidth
-	}
-	return s[:pos] + tail
-}
-
-// TruncateLeft cuts w cells from the beginning of the `s`.
-func (c *Condition) TruncateLeft(s string, w int, prefix string) string {
-	if c.StringWidth(s) <= w {
-		return prefix
-	}
-
-	var width int
-	pos := len(s)
-
-	g := uniseg.NewGraphemes(s)
-	for g.Next() {
-		var chWidth int
-		for _, r := range g.Runes() {
-			chWidth = c.RuneWidth(r)
-			if chWidth > 0 {
-				break // See StringWidth() for details.
-			}
-		}
-
-		if width+chWidth > w {
-			if width < w {
-				_, pos = g.Positions()
-				prefix += strings.Repeat(" ", width+chWidth-w)
-			} else {
-				pos, _ = g.Positions()
-			}
-
-			break
-		}
-
-		width += chWidth
-	}
-
-	return prefix + s[pos:]
-}
-
-// Wrap return string wrapped with w cells
-func (c *Condition) Wrap(s string, w int) string {
-	width := 0
-	out := ""
-	for _, r := range s {
-		cw := c.RuneWidth(r)
-		if r == '\n' {
-			out += string(r)
-			width = 0
-			continue
-		} else if width+cw > w {
-			out += "\n"
-			width = 0
-			out += string(r)
-			width += cw
-			continue
-		}
-		out += string(r)
-		width += cw
-	}
-	return out
-}
-
-// FillLeft return string filled in left by spaces in w cells
-func (c *Condition) FillLeft(s string, w int) string {
-	width := c.StringWidth(s)
-	count := w - width
-	if count > 0 {
-		b := make([]byte, count)
-		for i := range b {
-			b[i] = ' '
-		}
-		return string(b) + s
-	}
-	return s
-}
-
-// FillRight return string filled in left by spaces in w cells
-func (c *Condition) FillRight(s string, w int) string {
-	width := c.StringWidth(s)
-	count := w - width
-	if count > 0 {
-		b := make([]byte, count)
-		for i := range b {
-			b[i] = ' '
-		}
-		return s + string(b)
-	}
-	return s
-}
-
 // RuneWidth returns the number of cells in r.
 // See http://www.unicode.org/reports/tr11/
 func RuneWidth(r rune) int {
@@ -316,36 +182,6 @@ func IsAmbiguousWidth(r rune) bool {
 // IsNeutralWidth returns whether is neutral width or not.
 func IsNeutralWidth(r rune) bool {
 	return inTable(r, neutral)
-}
-
-// StringWidth return width as you can see
-func StringWidth(s string) (width int) {
-	return DefaultCondition.StringWidth(s)
-}
-
-// Truncate return string truncated with w cells
-func Truncate(s string, w int, tail string) string {
-	return DefaultCondition.Truncate(s, w, tail)
-}
-
-// TruncateLeft cuts w cells from the beginning of the `s`.
-func TruncateLeft(s string, w int, prefix string) string {
-	return DefaultCondition.TruncateLeft(s, w, prefix)
-}
-
-// Wrap return string wrapped with w cells
-func Wrap(s string, w int) string {
-	return DefaultCondition.Wrap(s, w)
-}
-
-// FillLeft return string filled in left by spaces in w cells
-func FillLeft(s string, w int) string {
-	return DefaultCondition.FillLeft(s, w)
-}
-
-// FillRight return string filled in left by spaces in w cells
-func FillRight(s string, w int) string {
-	return DefaultCondition.FillRight(s, w)
 }
 
 // CreateLUT will create an in-memory lookup table of 557055 bytes for faster operation.

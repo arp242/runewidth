@@ -1,4 +1,4 @@
-// +build ignore
+//go:build ignore
 
 // Generate runewidth_table.go from data at https://unicode.org/
 
@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"go/format"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -199,7 +199,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = ioutil.WriteFile("runewidth_table.go", out, 0666)
+	err = os.WriteFile("runewidth_table.go", out, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}

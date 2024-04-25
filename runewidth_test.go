@@ -1,5 +1,4 @@
 //go:build !js && !appengine
-// +build !js,!appengine
 
 package runewidth
 
@@ -271,141 +270,6 @@ func TestIsAmbiguousWidth(t *testing.T) {
 	}
 }
 
-var stringwidthtests = []struct {
-	in    string
-	out   int
-	eaout int
-}{
-	{"■㈱の世界①", 10, 12},
-	{"スター☆", 7, 8},
-	{"つのだ☆HIRO", 11, 12},
-}
-
-func TestStringWidth(t *testing.T) {
-	c := NewCondition()
-	c.EastAsianWidth = false
-	for _, tt := range stringwidthtests {
-		if out := c.StringWidth(tt.in); out != tt.out {
-			t.Errorf("StringWidth(%q) = %d, want %d", tt.in, out, tt.out)
-		}
-	}
-	c.EastAsianWidth = true
-	for _, tt := range stringwidthtests {
-		if out := c.StringWidth(tt.in); out != tt.eaout {
-			t.Errorf("StringWidth(%q) = %d, want %d (EA)", tt.in, out, tt.eaout)
-		}
-	}
-}
-
-func TestStringWidthInvalid(t *testing.T) {
-	s := "こんにちわ\x00世界"
-	if out := StringWidth(s); out != 14 {
-		t.Errorf("StringWidth(%q) = %d, want %d", s, out, 14)
-	}
-}
-
-func TestTruncateSmaller(t *testing.T) {
-	s := "あいうえお"
-	expected := "あいうえお"
-
-	if out := Truncate(s, 10, "..."); out != expected {
-		t.Errorf("Truncate(%q) = %q, want %q", s, out, expected)
-	}
-}
-
-func TestTruncate(t *testing.T) {
-	s := "あいうえおあいうえおえおおおおおおおおおおおおおおおおおおおおおおおおおおおおおお"
-	expected := "あいうえおあいうえおえおおおおおおおおおおおおおおおおおおおおおおおおおおお..."
-	out := Truncate(s, 80, "...")
-	if out != expected {
-		t.Errorf("Truncate(%q) = %q, want %q", s, out, expected)
-	}
-	width := StringWidth(out)
-	if width != 79 {
-		t.Errorf("width of Truncate(%q) should be %d, but %d", s, 79, width)
-	}
-}
-
-func TestTruncateFit(t *testing.T) {
-	s := "aあいうえおあいうえおえおおおおおおおおおおおおおおおおおおおおおおおおおおおおおお"
-	expected := "aあいうえおあいうえおえおおおおおおおおおおおおおおおおおおおおおおおおおおお..."
-
-	out := Truncate(s, 80, "...")
-	if out != expected {
-		t.Errorf("Truncate(%q) = %q, want %q", s, out, expected)
-	}
-	width := StringWidth(out)
-	if width != 80 {
-		t.Errorf("width of Truncate(%q) should be %d, but %d", s, 80, width)
-	}
-}
-
-func TestTruncateJustFit(t *testing.T) {
-	s := "あいうえおあいうえおえおおおおおおおおおおおおおおおおおおおおおおおおおおおおお"
-	expected := "あいうえおあいうえおえおおおおおおおおおおおおおおおおおおおおおおおおおおおおお"
-
-	out := Truncate(s, 80, "...")
-	if out != expected {
-		t.Errorf("Truncate(%q) = %q, want %q", s, out, expected)
-	}
-	width := StringWidth(out)
-	if width != 80 {
-		t.Errorf("width of Truncate(%q) should be %d, but %d", s, 80, width)
-	}
-}
-
-func TestWrap(t *testing.T) {
-	s := `東京特許許可局局長はよく柿喰う客だ/東京特許許可局局長はよく柿喰う客だ
-123456789012345678901234567890
-
-END`
-	expected := `東京特許許可局局長はよく柿喰う
-客だ/東京特許許可局局長はよく
-柿喰う客だ
-123456789012345678901234567890
-
-END`
-
-	if out := Wrap(s, 30); out != expected {
-		t.Errorf("Wrap(%q) = %q, want %q", s, out, expected)
-	}
-}
-
-func TestTruncateNoNeeded(t *testing.T) {
-	s := "あいうえおあい"
-	expected := "あいうえおあい"
-
-	if out := Truncate(s, 80, "..."); out != expected {
-		t.Errorf("Truncate(%q) = %q, want %q", s, out, expected)
-	}
-}
-
-var truncatelefttests = []struct {
-	s      string
-	w      int
-	prefix string
-	out    string
-}{
-	{"source", 4, "", "ce"},
-	{"source", 4, "...", "...ce"},
-	{"あいうえお", 6, "", "えお"},
-	{"あいうえお", 6, "...", "...えお"},
-	{"あいうえお", 10, "", ""},
-	{"あいうえお", 10, "...", "..."},
-	{"あいうえお", 5, "", " えお"},
-	{"Aあいうえお", 5, "", "うえお"},
-}
-
-func TestTruncateLeft(t *testing.T) {
-	t.Parallel()
-
-	for _, tt := range truncatelefttests {
-		if out := TruncateLeft(tt.s, tt.w, tt.prefix); out != tt.out {
-			t.Errorf("TruncateLeft(%q) = %q, want %q", tt.s, out, tt.out)
-		}
-	}
-}
-
 var isneutralwidthtests = []struct {
 	in  rune
 	out bool
@@ -427,42 +291,6 @@ func TestIsNeutralWidth(t *testing.T) {
 	}
 }
 
-func TestFillLeft(t *testing.T) {
-	s := "あxいうえお"
-	expected := "    あxいうえお"
-
-	if out := FillLeft(s, 15); out != expected {
-		t.Errorf("FillLeft(%q) = %q, want %q", s, out, expected)
-	}
-}
-
-func TestFillLeftFit(t *testing.T) {
-	s := "あいうえお"
-	expected := "あいうえお"
-
-	if out := FillLeft(s, 10); out != expected {
-		t.Errorf("FillLeft(%q) = %q, want %q", s, out, expected)
-	}
-}
-
-func TestFillRight(t *testing.T) {
-	s := "あxいうえお"
-	expected := "あxいうえお    "
-
-	if out := FillRight(s, 15); out != expected {
-		t.Errorf("FillRight(%q) = %q, want %q", s, out, expected)
-	}
-}
-
-func TestFillRightFit(t *testing.T) {
-	s := "あいうえお"
-	expected := "あいうえお"
-
-	if out := FillRight(s, 10); out != expected {
-		t.Errorf("FillRight(%q) = %q, want %q", s, out, expected)
-	}
-}
-
 func TestEnv(t *testing.T) {
 	old := os.Getenv("RUNEWIDTH_EASTASIAN")
 	defer os.Setenv("RUNEWIDTH_EASTASIAN", old)
@@ -472,31 +300,5 @@ func TestEnv(t *testing.T) {
 
 	if w := RuneWidth('│'); w != 1 {
 		t.Errorf("RuneWidth('│') = %d, want %d", w, 1)
-	}
-}
-
-func TestZeroWidthJoiner(t *testing.T) {
-	c := NewCondition()
-
-	var tests = []struct {
-		in   string
-		want int
-	}{
-		{"👩", 2},
-		{"👩\u200d", 2},
-		{"👩\u200d🍳", 2},
-		{"\u200d🍳", 2},
-		{"👨\u200d👨", 2},
-		{"👨\u200d👨\u200d👧", 2},
-		{"🏳️\u200d🌈", 1},
-		{"あ👩\u200d🍳い", 6},
-		{"あ\u200d🍳い", 6},
-		{"あ\u200dい", 4},
-	}
-
-	for _, tt := range tests {
-		if got := c.StringWidth(tt.in); got != tt.want {
-			t.Errorf("StringWidth(%q) = %d, want %d", tt.in, got, tt.want)
-		}
 	}
 }

@@ -1,27 +1,23 @@
-go-runewidth
-============
+runewidth provides functions to get fixed width of the character or string.
 
-[![Build Status](https://github.com/mattn/go-runewidth/workflows/test/badge.svg?branch=master)](https://github.com/mattn/go-runewidth/actions?query=workflow%3Atest)
-[![Codecov](https://codecov.io/gh/mattn/go-runewidth/branch/master/graph/badge.svg)](https://codecov.io/gh/mattn/go-runewidth)
-[![GoDoc](https://godoc.org/github.com/mattn/go-runewidth?status.svg)](http://godoc.org/github.com/mattn/go-runewidth)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mattn/go-runewidth)](https://goreportcard.com/report/github.com/mattn/go-runewidth)
+This is a fork of https://github.com/mattn/go-runewidth, updated to the newest
+Unicode. It also removes various helper functions, so all that remains is just
+the `runewidth.RuneWidth()` function:
 
-Provides functions to get fixed width of the character or string.
+    runewidth.RuneWidth('a')
+    runewidth.RuneWidth('つ')
+    runewidth.RuneWidth('🤷')
 
-Usage
------
+Note this can NOT be used to get the width of the string:
 
-```go
-runewidth.StringWidth("つのだ☆HIRO") == 12
-```
+    // Broken! Do not do this.
+    l := 0
+    for _, r := range str {
+        l += runewidth.RuneWidth(r)
+    }
 
+Use https://github.com/arp242/termtext or https://github.com/rivo/uniseg for
+getting the width of a string.
 
-Author
-------
-
-Yasuhiro Matsumoto
-
-License
--------
-
-under the MIT License: http://mattn.mit-license.org/2013
+This is mostly useful in conjunction with the uniseg package, as used in
+termtext.
