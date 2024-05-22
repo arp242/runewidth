@@ -1,4 +1,4 @@
-//go:generate go run script/generate.go
+//go:generate go run script/generate.go runewidth_table
 
 package runewidth
 
